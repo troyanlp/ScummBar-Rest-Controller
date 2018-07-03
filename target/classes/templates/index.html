@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Kendo UI DataSource CRUD Example</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet"
+	href="http://cdn.kendostatic.com/2015.1.318/styles/kendo.common.min.css" />
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+<link rel="stylesheet"
+	href="http://cdn.kendostatic.com/2015.1.318/styles/kendo.bootstrap.min.css" />
+</head>
+
+
+<body style="margin: 100px">
+	<div class="panel panel-default">
+		<div class="panel-body">
+			<label for="name">Enter users name click add:</label>
+			<div class="input-group">
+					<input type="text" id="name" class="form-control"
+						placeholder="name" /> <span class="input-group-btn">
+						<button class="btn btn-primary" id="add" type="button">Add</button>
+					</span>
+			</div>
+			<div id="grid"></div>
+		</div>
+	</div>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="http://cdn.kendostatic.com/2015.1.318/js/kendo.all.min.js"></script>
+
+
+	<script>
+		var dataSource = new kendo.data.DataSource({
+
+			autoSync : true, //sync changes with restful API automatically
+
+			transport : {
+				read : {
+					url : 'http://localhost:8080/v1/board/all',
+					dataType : 'json', //not needed jQuery figures it out, shown to be verbose
+					type : 'GET' //defined but, this is the default
+				},
+				create : {
+					url : 'http://localhost:8080/v1/board',
+					type : 'POST'
+				},
+				update : {
+					url : function(data) {
+						return 'http://localhost:8080/v1/board/' + data.id;
+					},
+					type : 'PUT'
+				},
+				destroy : {
+					url : function(data) {
+						return 'http://localhost:8080/v1/board/' + data.id;
+					},
+					type : 'DELETE'
+				}
+			},
+
+			schema : {
+				model : {
+					id : 'id'
+				}
+			}
+
+		});
+
+		$('#grid')
+				.kendoGrid(
+						{
+							columns : [
+									{
+										field : 'id'
+									},
+									{
+										field : 'name',
+										template : '<input value="#:name#" />'
+									},
+									{
+										field : ' ',
+										template : '<button type="button" data-id="#:id#" id="update" class="btn btn-default btn-xs">update</button>&nbsp;<button type="button" data-id="#:id#" id="delete" class="btn btn-danger btn-xs">delete</button>'
+									} ],
+							dataSource : dataSource
+						});
+
+		$('#add').on('click', function() {
+			dataSource.add({
+				name : $('#name').val()
+			});
+			$('#name').reset();
+			dataSource.sync(); //using autoSync: true so don't have to call
+		});
+
+		$('#grid').on('click', '#delete', function() {
+			var $this = $(this);
+			dataSource.remove(dataSource.get($this.data('id')));
+			//dataSource.sync(); //using autoSync: true so don't have to call
+		});
+
+		$('#grid').on(
+				'click',
+				'#update',
+				function() {
+					var $this = $(this);
+					dataSource.get($this.data('id')).set('name',
+							$this.closest('tr').find('input').val());
+					//dataSource.sync(); //using autoSync: true so don't have to call
+				});
+	</script>
+</body>
+</html>
